@@ -3,7 +3,7 @@
 using namespace std;
 /* Name: Miguel Angel Prado
  * Date: 03/09/2026
- * Purpose:
+ * Purpose: Upgrading previous BankAccount program to have more functions and to have savings and checking accounts rather than just a generic bank account class
  * Assignment: Lab Activities: Inheritance
  */
 
@@ -16,7 +16,7 @@ class BankAccount {
         string GetName() const;
         double GetBal() const;
         void deposit(double amount);
-        void withdraw(double amount);
+        virtual void withdraw(double amount);
         BankAccount (const BankAccount& other);
         BankAccount& operator=(const BankAccount& other);
         ~BankAccount();
@@ -162,7 +162,7 @@ class CheckingAccount : public BankAccount {
         CheckingAccount(const string& number, const string& name, double bal) : BankAccount(number, name, bal) {
             this->transactionFee = 10;
         };
-    void withdraw(double amount) {
+    void withdraw(double amount) override {
         BankAccount::withdraw(amount + this->transactionFee);
     }
     private:
@@ -184,8 +184,6 @@ void SavingsAccount::calculateInterest() {
 }
 int main() {
     vector<BankAccount*> accounts;
-    vector<SavingsAccount> savingsAccounts;
-    vector<CheckingAccount> checkingAccounts;
     int choice;
     do {
         cout << "Select an option: " << endl;
@@ -225,10 +223,8 @@ int main() {
                     cin.clear();
                     cin.ignore();
                 }
-                CheckingAccount tempAccount = CheckingAccount(number, name, bal);
-                checkingAccounts.push_back(tempAccount);
-                accounts.push_back(&checkingAccounts.at(checkingAccounts.size() -1));
-                CheckingAccount::printAccount(tempAccount);
+                CheckingAccount* tempAccount = new CheckingAccount(number, name, bal);
+                accounts.push_back(tempAccount);
                 break;
             }
             case 2: {
@@ -252,10 +248,8 @@ int main() {
                     cin.clear();
                     cin.ignore();
                 }
-                SavingsAccount tempAccount = SavingsAccount(number, name, bal);
-                savingsAccounts.push_back(tempAccount);
-                accounts.push_back(&savingsAccounts.at(savingsAccounts.size() - 1));
-                BankAccount::printAccount(tempAccount);
+                SavingsAccount* tempAccount = new SavingsAccount(number, name, bal);
+                accounts.push_back(tempAccount);
                 break;
             }
             case 3: {
@@ -312,8 +306,15 @@ int main() {
                 break;
             }
             case 5: {
-            cout << "5" << endl;
+                for (BankAccount* acc : accounts) {
+                    SavingsAccount* sa = dynamic_cast<SavingsAccount*>(acc);
+                    if (sa != nullptr) {
+                        sa->calculateInterest();
+                        cout << "Interest calculated for account: " << sa->GetNumber() << endl;
+                    }
+                }
             }
+                break;
             case 6: {
                 string number;
                 int tempIndex = -1;
@@ -333,14 +334,17 @@ int main() {
                     }
                 }
                 BankAccount::printAccount(*accounts.at(tempIndex));
-                //BankAccount::printAccount(*accounts.at(0));
-                //BankAccount::printAccount(*accounts.at(1));
-                //CheckingAccount::printAccount(checkingAccounts.at(0));
-                //CheckingAccount::printAccount(checkingAccounts.at(1));
                 break;
             }
             case 7: {
                 cout << "5. Quit:" << endl << "Goodbye!" << endl;
+                for (BankAccount* acc : accounts) {
+                    SavingsAccount* sa = dynamic_cast<SavingsAccount*>(acc);
+                    if (sa != nullptr) {
+                        sa->calculateInterest();
+                        cout << "Interest calculated for account: " << sa->GetNumber() << endl;
+                    }
+                }
                 break;
             }
             default: {
