@@ -2,9 +2,9 @@
 #include <set>
 using namespace std;
 /* Name: Miguel Angel Prado
- * Date: 02/20/2026
- * Purpose: Implement a BankAccount class to simulate basic banking operations for multiple accounts.
- * Assignment: Lab Activities: Advanced Objects and Classes II
+ * Date: 03/09/2026
+ * Purpose:
+ * Assignment: Lab Activities: Inheritance
  */
 
 class BankAccount {
@@ -27,7 +27,6 @@ class BankAccount {
         bool operator>(const BankAccount& other) const;
         static void printAccount(const BankAccount& account);
         static BankAccount createAccountFromInput();
-
     private:
         string accountNumber;
         string accountHolderName;
@@ -74,8 +73,7 @@ BankAccount& BankAccount::operator=(const BankAccount& other) {
     }
     return *this;
 }
-BankAccount::~BankAccount() {
-}
+BankAccount::~BankAccount() = default;
 BankAccount& BankAccount::operator+=(double amount) {
     while (amount < 0) {
         cout << "Invalid amount, must be > 0, try again." << endl;
@@ -159,17 +157,45 @@ BankAccount BankAccount::createAccountFromInput() {
     BankAccount tempAccount(number, name, bal);
     return tempAccount;
 }
+class CheckingAccount : public BankAccount {
+    public:
+        CheckingAccount(const string& number, const string& name, double bal) : BankAccount(number, name, bal) {
+            this->transactionFee = 10;
+        };
+    void withdraw(double amount) {
+        BankAccount::withdraw(amount + this->transactionFee);
+    }
+    private:
+        double transactionFee;
+};
 
+class SavingsAccount : public BankAccount {
+    public:
+        SavingsAccount(const string& number, const string& name, double bal) : BankAccount(number, name, bal) {
+            this->interestRate = 0.1;
+        }
+        void calculateInterest();
+    private:
+        double interestRate;
+};
+void SavingsAccount::calculateInterest() {
+    double interest = GetBal() * interestRate;
+    deposit(interest);
+}
 int main() {
-    vector<BankAccount> accounts;
+    vector<BankAccount*> accounts;
+    vector<SavingsAccount> savingsAccounts;
+    vector<CheckingAccount> checkingAccounts;
     int choice;
     do {
         cout << "Select an option: " << endl;
-        cout << "1. Create Account" << endl;
-        cout << "2. Deposit" << endl;
-        cout << "3. Withdraw" << endl;
-        cout << "4. View Account Info" << endl;
-        cout << "5. Quit" << endl;
+        cout << "1. Create Checking Account" << endl;
+        cout << "2. Create Savings Account" << endl;
+        cout << "3. Deposit" << endl;
+        cout << "4. Withdraw" << endl;
+        cout << "5. Calculate Interest" << endl;
+        cout << "6. View Account Info" << endl;
+        cout << "7. Quit" << endl;
 
         cin >> choice;
         if (cin.fail()) {
@@ -179,11 +205,60 @@ int main() {
         }
         switch (choice) {
             case 1: {
-                BankAccount tempAccount = BankAccount::createAccountFromInput();
-                accounts.push_back(tempAccount);
+                string number;
+                string name;
+                double bal;
+                cout << "Enter account number: " << endl;
+                cin >> number;
+                cin.clear();
+                cin.ignore();
+                cout << "Enter account holder name: " << endl;
+                getline(cin, name);
+                cin.clear();
+                cout << "Enter initial balance: " << endl;
+                cin >> bal;
+                cin.clear();
+                while (bal < 0) {
+                    cout << "Invalid amount, must be >= 0, try again." << endl;
+                    cout << "Enter initial balance: " << endl;
+                    cin >> bal;
+                    cin.clear();
+                    cin.ignore();
+                }
+                CheckingAccount tempAccount = CheckingAccount(number, name, bal);
+                checkingAccounts.push_back(tempAccount);
+                accounts.push_back(&checkingAccounts.at(checkingAccounts.size() -1));
+                CheckingAccount::printAccount(tempAccount);
                 break;
             }
             case 2: {
+                string number;
+                string name;
+                double bal;
+                cout << "Enter account number: " << endl;
+                cin >> number;
+                cin.clear();
+                cin.ignore();
+                cout << "Enter account holder name: " << endl;
+                getline(cin, name);
+                cin.clear();
+                cout << "Enter initial balance: " << endl;
+                cin >> bal;
+                cin.clear();
+                while (bal < 0) {
+                    cout << "Invalid amount, must be >= 0, try again." << endl;
+                    cout << "Enter initial balance: " << endl;
+                    cin >> bal;
+                    cin.clear();
+                    cin.ignore();
+                }
+                SavingsAccount tempAccount = SavingsAccount(number, name, bal);
+                savingsAccounts.push_back(tempAccount);
+                accounts.push_back(&savingsAccounts.at(savingsAccounts.size() - 1));
+                BankAccount::printAccount(tempAccount);
+                break;
+            }
+            case 3: {
                 string number;
                 int tempIndex = -1;
                 double amount;
@@ -193,7 +268,7 @@ int main() {
                     cin.clear();
                     cin.ignore();
                         for (int i = 0; i < accounts.size(); i++) {
-                            if (number == accounts.at(i).GetNumber()) {
+                            if (accounts.at(i)->GetNumber() == number) {
                                 tempIndex = i;
                                 break;
                             }
@@ -206,10 +281,10 @@ int main() {
                 cin >> amount;
                 cin.clear();
                 cin.ignore();
-                accounts.at(tempIndex)+=amount;
+                accounts.at(tempIndex)->deposit(amount);
                 break;
             }
-            case 3: {
+            case 4: {
                 string number;
                 int tempIndex = -1;
                 double amount;
@@ -219,7 +294,7 @@ int main() {
                     cin.clear();
                     cin.ignore();
                     for (int i = 0; i < accounts.size(); i++) {
-                        if (number == accounts.at(i).GetNumber()) {
+                        if (number == accounts.at(i)->GetNumber()) {
                             tempIndex = i;
                             break;
                         }
@@ -232,10 +307,14 @@ int main() {
                 cin >> amount;
                 cin.clear();
                 cin.ignore();
-                accounts.at(tempIndex)-=amount;
+
+                accounts.at(tempIndex)->withdraw(amount);
                 break;
             }
-            case 4: {
+            case 5: {
+            cout << "5" << endl;
+            }
+            case 6: {
                 string number;
                 int tempIndex = -1;
                 while (tempIndex == -1) {
@@ -244,7 +323,7 @@ int main() {
                     cin.clear();
                     cin.ignore();
                     for (int i = 0; i < accounts.size(); i++) {
-                        if (number == accounts.at(i).GetNumber()) {
+                        if (number == accounts.at(i)->GetNumber()) {
                             tempIndex = i;
                             break;
                         }
@@ -253,10 +332,14 @@ int main() {
                         cout << "Invalid account number, try again" << endl;
                     }
                 }
-                BankAccount::printAccount(accounts.at(tempIndex));
+                BankAccount::printAccount(*accounts.at(tempIndex));
+                //BankAccount::printAccount(*accounts.at(0));
+                //BankAccount::printAccount(*accounts.at(1));
+                //CheckingAccount::printAccount(checkingAccounts.at(0));
+                //CheckingAccount::printAccount(checkingAccounts.at(1));
                 break;
             }
-            case 5: {
+            case 7: {
                 cout << "5. Quit:" << endl << "Goodbye!" << endl;
                 break;
             }
@@ -264,6 +347,6 @@ int main() {
                 cout << "Invalid input, try again" << endl;
             }
         }
-    } while (choice != 5);
+    } while (choice != 7);
     return 0;
 }
